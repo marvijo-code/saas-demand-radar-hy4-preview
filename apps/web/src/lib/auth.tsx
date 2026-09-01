@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ApiError, api, type AuthSession } from '../lib/api.ts';
+import { AUTH_EXPIRED_EVENT, ApiError, api, type AuthSession } from '../lib/api.ts';
 
 interface AuthState {
   status: 'loading' | 'authenticated' | 'anonymous';
@@ -38,6 +38,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    const expireSession = () => {
+      setSession(null);
+      setStatus('anonymous');
+      setError(null);
+    };
+    window.addEventListener(AUTH_EXPIRED_EVENT, expireSession);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, expireSession);
+  }, []);
 
   const signIn = useCallback(
     async (email: string, password: string) => {

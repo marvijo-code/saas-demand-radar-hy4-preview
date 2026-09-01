@@ -8,6 +8,7 @@
 import type { EngagementCounts, NeedTrendPoint } from '@sdr/shared';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
+export const AUTH_EXPIRED_EVENT = 'sdr:auth-expired';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -51,6 +52,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   if (!response.ok) {
     const error = (payload as { error?: { code?: string; message?: string; details?: unknown } })
       ?.error;
+    if (response.status === 401 && path !== '/auth/login') {
+      window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+    }
     throw new ApiError(
       response.status,
       error?.code ?? 'request_failed',

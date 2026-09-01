@@ -29,19 +29,15 @@ interface RedditListing {
 }
 
 async function redditGet(path: string, search: URLSearchParams): Promise<RedditListing> {
-  const useOAuth = Boolean(config.sources.redditClientId && config.sources.redditClientSecret);
-  const base = useOAuth ? 'https://oauth.reddit.com' : 'https://www.reddit.com';
-  const url = new URL(`${base}${path}`);
+  const url = new URL(`https://oauth.reddit.com${path}`);
   search.forEach((value, key) => url.searchParams.set(key, value));
 
   const headers: Record<string, string> = {
     'User-Agent': config.sources.redditUserAgent,
     Accept: 'application/json',
   };
-  if (useOAuth) {
-    const token = await redditAppToken();
-    headers.Authorization = `bearer ${token}`;
-  }
+  const token = await redditAppToken();
+  headers.Authorization = `bearer ${token}`;
 
   const response = await fetch(url, {
     headers,
@@ -52,6 +48,117 @@ async function redditGet(path: string, search: URLSearchParams): Promise<RedditL
     throw new Error(`Reddit responded ${response.status}: ${detail || response.statusText}`);
   }
   return (await response.json()) as RedditListing;
+}
+
+function decodeEntities(value: string): string {
+  const named: Record<string, string> = {
+    amp: '&',
+    apos: "'",
+    gt: '>',
+    lt: '<',
+    quot: '"',
+  };
+  return value.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (whole, entity: string) => {
+    if (entity.startsWith('#x')) {
+      return String.fromCodePoint(Number.parseInt(entity.slice(2), 16));
+    }
+    if (entity.startsWith('#')) {
+      return String.fromCodePoint(Number.parseInt(entity.slice(1), 10));
+    }
+    return named[entity.toLowerCase()] ?? whole;
+  });
+}
+
+function tag(entry: string, name: string): string {
+  const match = new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, 'i').exec(entry);
+  return match?.[1] ? decodeEntities(match[1]).trim() : '';
+}
+
+function attribute(entry: string, name: string, attributeName: string): string {
+  const element = new RegExp(`<${name}\\b[^>]*\\b${attributeName}="([^"]+)"[^>]*>`, 'i').exec(entry);
+  return element?.[1] ? decodeEntities(element[1]).trim() : '';
+}
+
+function textFromHtml(value: string): string {
+  return decodeEntities(value)
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/p>|<\/div>|<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s+/g, '\n')
+    .trim();
+}
+
+/** Parse the public Reddit Atom feed without adding an XML dependency. */
+export function parseRedditAtom(xml: string): { records: RawSourceRecord[]; errors: AdapterError[] } {
+  const records: RawSourceRecord[] = [];
+  const errors: AdapterError[] = [];
+  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/gi)];
+
+  entries.forEach((match, index) => {
+    const entry = match[1] ?? '';
+    const url = attribute(entry, 'link', 'href');
+    const feedId = tag(entry, 'id').replace(/^t3_/, '');
+    const externalId = feedId || /\/comments\/([^/]+)/i.exec(url)?.[1] || '';
+    const title = textFromHtml(tag(entry, 'title'));
+    const content = textFromHtml(tag(entry, 'content'));
+    const text = [title, content].filter(Boolean).join('\n\n');
+    const author = tag(tag(entry, 'author'), 'name').replace(/^\/u\//, '') || null;
+    const publishedAt = tag(entry, 'published') || tag(entry, 'updated');
+    const subreddit = attribute(entry, 'category', 'label') || undefined;
+
+    try {
+      records.push(
+        normalizeRecord(
+          {
+            platform: 'reddit',
+            externalId,
+            url,
+            author,
+            publishedAt,
+            text,
+            engagement: {},
+            subreddit,
+          },
+          index,
+        ),
+      );
+    } catch (error) {
+      errors.push({ index, message: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  return { records, errors };
+}
+
+async function redditRssGet(
+  subreddits: string[],
+  query: string,
+  maxResults: number,
+): Promise<{ records: RawSourceRecord[]; errors: AdapterError[] }> {
+  const scope = subreddits.length ? `/r/${subreddits.join('+')}` : '';
+  const url = new URL(`https://www.reddit.com${scope}/search.rss`);
+  url.searchParams.set('q', query);
+  url.searchParams.set('sort', 'new');
+  url.searchParams.set('limit', String(Math.min(Math.max(maxResults, 1), 100)));
+  if (subreddits.length) url.searchParams.set('restrict_sr', 'on');
+
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': config.sources.redditUserAgent,
+      Accept: 'application/atom+xml,application/xml;q=0.9',
+    },
+    signal: AbortSignal.timeout(config.sources.httpTimeoutMs),
+  });
+  if (!response.ok) {
+    const detail = (await response.text().catch(() => '')).slice(0, 300);
+    throw new Error(`Reddit RSS responded ${response.status}: ${detail || response.statusText}`);
+  }
+  const xml = await response.text();
+  if (!xml.includes('<feed') || !xml.includes('</feed>')) {
+    throw new Error('Reddit RSS returned a response that was not an Atom feed.');
+  }
+  return parseRedditAtom(xml);
 }
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
@@ -112,6 +219,19 @@ export const redditAdapter: SourceAdapter = {
       ? ctx.keywords.map((keyword) => `"${keyword}"`).join(' OR ')
       : config.sources.redditQuery;
 
+    const useOAuth = Boolean(config.sources.redditClientId && config.sources.redditClientSecret);
+    if (!useOAuth) {
+      const { records, errors } = await redditRssGet(subreddits, query, ctx.maxResults);
+      return {
+        records,
+        errors,
+        notes: [
+          `Reddit RSS search returned ${records.length} post(s) for query "${query}"${subreddits.length ? ` in ${subreddits.join(', ')}` : ''}.`,
+          'Used Reddit public RSS search (no credentials configured). RSS does not include vote or comment counts.',
+        ],
+      };
+    }
+
     const search = new URLSearchParams();
     search.set('q', query);
     search.set('sort', 'new');
@@ -160,9 +280,7 @@ export const redditAdapter: SourceAdapter = {
       errors,
       notes: [
         `Reddit search returned ${records.length} post(s) for query "${query}"${subreddits.length ? ` in ${subreddits.join(', ')}` : ''}.`,
-        config.sources.redditClientId
-          ? 'Authenticated with the Reddit OAuth application credentials.'
-          : 'Used the public Reddit JSON endpoint (no credentials configured).',
+        'Authenticated with the Reddit OAuth application credentials.',
       ],
     };
   },

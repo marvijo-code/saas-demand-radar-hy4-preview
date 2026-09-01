@@ -51,6 +51,21 @@ test.describe('authentication', () => {
     await page.goto('/needs');
     await expect(page.getByTestId('login-form')).toBeVisible();
   });
+
+  test('an expired session returns to sign-in instead of showing a page error', async ({ page }) => {
+    await signIn(page);
+    await page.context().clearCookies();
+
+    await page.getByRole('link', { name: 'Audit' }).click();
+    await expect(page.getByTestId('login-form')).toBeVisible();
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByText('Something went wrong')).toHaveCount(0);
+
+    await page.getByRole('button', { name: `Acme admin: ${ACME.email}` }).click();
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByTestId('dashboard')).toBeVisible();
+  });
 });
 
 test.describe('navigation and surfaces', () => {

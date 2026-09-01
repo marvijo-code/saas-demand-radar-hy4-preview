@@ -285,9 +285,9 @@ reproducible, needs no network access and invents nothing.
 
 ### `reddit` — Reddit search (works without credentials)
 
-* Reddit's public JSON search endpoint needs no credentials — only a descriptive
-  `User-Agent`. With `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` it switches to the OAuth
-  endpoint for higher rate limits.
+* Without credentials, the adapter uses Reddit's public Atom/RSS search feed. The feed does
+  not include vote or comment counts. With `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` it
+  switches to the JSON OAuth endpoint, which includes those counts and has higher rate limits.
 * Public search is rate limited per IP by Reddit.
 * Search relevance ordering means some older matches may be missed between runs.
 * Only public posts are returned; deleted or quarantined posts are not.
