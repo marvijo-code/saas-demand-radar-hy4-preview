@@ -4,6 +4,20 @@ This repository is the HY4 Preview implementation from a controlled model compar
 It is published as a standalone source artifact. It does not include model transcripts,
 credentials, local databases, recordings, build output, or operator workspace paths.
 
+## Screenshots
+
+### Demand dashboard
+
+![HY4 Preview SaaS Demand Radar dashboard](docs/screenshots/dashboard.png)
+
+### Need analysis
+
+![HY4 Preview SaaS need analysis](docs/screenshots/need-detail.png)
+
+### Mobile dashboard
+
+<img src="docs/screenshots/mobile-dashboard.png" alt="HY4 Preview mobile SaaS Demand Radar dashboard" width="390">
+
 Discover which software-as-a-service products people are **publicly asking for** right now on
 X and Reddit.
 
