@@ -1,0 +1,35 @@
+{
+  "name": "saas-demand-radar",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Discover which SaaS products people currently ask for in public X and Reddit conversations.",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "workspaces": [
+    "packages/shared",
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "start": "node scripts/start.mjs",
+    "dev": "node scripts/dev.mjs",
+    "stop": "node scripts/stop.mjs",
+    "build": "node scripts/build.mjs",
+    "migrate": "node apps/api/src/db/migrate-cli.ts",
+    "db:reset": "node apps/api/src/db/migrate-cli.ts --reset",
+    "seed": "node apps/api/src/db/seed-cli.ts",
+    "typecheck": "node scripts/typecheck.mjs",
+    "lint": "node scripts/typecheck.mjs",
+    "test": "node scripts/test.mjs",
+    "test:unit": "node --test packages/shared/test/*.test.ts",
+    "test:api": "node scripts/test-api.mjs",
+    "test:browser": "node scripts/test-browser.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

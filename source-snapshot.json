@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-01T00:00:00+02:00",
+  "records": [
+    {
+      "platform": "x",
+      "externalId": "1904651944968302909",
+      "url": "https://x.com/PhotoAmy33/status/1904651944968302909",
+      "author": "PhotoAmy33",
+      "publishedAt": "2025-03-25T00:00:00Z",
+      "text": "I wish there was an app where you could take a photo of what you have in your fridge and then it would give you recipe ideas.",
+      "engagement": {"likes": 0, "replies": 0, "reposts": 0}
+    },
+    {
+      "platform": "reddit",
+      "externalId": "1u5ivq4",
+      "url": "https://www.reddit.com/r/SaaS/comments/1u5ivq4/looking_for_a_reddit_tool/",
+      "author": "public-reddit-user",
+      "publishedAt": "2026-06-14T00:00:00Z",
+      "text": "Does anyone have a tool to find prospects on Reddit? I run a cold email agency and want that work automated.",
+      "engagement": {"upvotes": 1, "comments": 4}
+    },
+    {
+      "platform": "reddit",
+      "externalId": "1s41rmh",
+      "url": "https://www.reddit.com/r/Entrepreneur/comments/1s41rmh/made_a_tool_directory_after_realizing_i_was/",
+      "author": "Rahman_khan_731",
+      "publishedAt": "2026-03-26T00:00:00Z",
+      "text": "Finding the right software for a specific situation takes forever. Search results are often dead, enterprise-priced, or not a fit.",
+      "engagement": {"upvotes": 3, "comments": 1}
+    },
+    {
+      "platform": "reddit",
+      "externalId": "1u36nlj",
+      "url": "https://www.reddit.com/r/ITManagers/comments/1u36nlj/how_do_you_track_ai_chatbot_usage/",
+      "author": "public-reddit-user",
+      "publishedAt": "2026-06-10T00:00:00Z",
+      "text": "I wish there was a simple out-of-the-box solution for tracking AI chatbot usage across company devices.",
+      "engagement": {"upvotes": 2, "comments": 3}
+    },
+    {
+      "platform": "reddit",
+      "externalId": "1s24xnu",
+      "url": "https://www.reddit.com/r/samsung/comments/1s24xnu/galaxy_s26_ultra_and_buds4_pro_a_month_later/",
+      "author": "public-reddit-user",
+      "publishedAt": "2026-03-19T00:00:00Z",
+      "text": "I wish there was a way to set different privacy levels for different apps instead of one global level.",
+      "engagement": {"upvotes": 4, "comments": 2}
+    },
+    {
+      "platform": "reddit",
+      "externalId": "1in6lce",
+      "url": "https://www.reddit.com/r/dataengineering/comments/1in6lce/how_do_you_keep_yourself_updated_with_new/",
+      "author": "public-reddit-user",
+      "publishedAt": "2025-02-10T00:00:00Z",
+      "text": "I wish there was a newsletter that gives useful updates about new data-engineering technology, features, and tools.",
+      "engagement": {"upvotes": 3, "comments": 2}
+    }
+  ]
+}
