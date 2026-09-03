@@ -12,7 +12,7 @@
   "dependencies": {
     "@sdr/shared": "*",
     "cookie-parser": "^1.4.7",
-    "express": "^4.21.2"
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.8",
